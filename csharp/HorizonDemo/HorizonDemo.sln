@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33927.249
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HorizonDemo", "HorizonDemo.csproj", "{80BBFB27-7811-4C6F-BD1D-0A04190DF1F9}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "HorizonSetup", "..\HorizonSetup\HorizonSetup.vdproj", "{30BB65BE-69D8-4056-B813-D7DF87A23F6B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80BBFB27-7811-4C6F-BD1D-0A04190DF1F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80BBFB27-7811-4C6F-BD1D-0A04190DF1F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80BBFB27-7811-4C6F-BD1D-0A04190DF1F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80BBFB27-7811-4C6F-BD1D-0A04190DF1F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30BB65BE-69D8-4056-B813-D7DF87A23F6B}.Debug|Any CPU.ActiveCfg = Debug
+		{30BB65BE-69D8-4056-B813-D7DF87A23F6B}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97F15797-8494-4C2F-8914-91FFAB3E582F}
+	EndGlobalSection
+EndGlobal

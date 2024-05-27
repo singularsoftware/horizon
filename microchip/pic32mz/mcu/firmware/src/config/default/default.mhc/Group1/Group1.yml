@@ -1,0 +1,6 @@
+format_version: v1.0
+type: GroupComponent
+attributes: {displayName: Flash SST26, id: Group1}
+children:
+- type: ElementPosition
+  attributes: {x: '175', y: '135', id: Group1}
