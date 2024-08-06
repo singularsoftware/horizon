@@ -1,0 +1,483 @@
+/* ************************************************************************** */
+/** Descriptive File Name
+
+  @Company
+    Company Name
+
+  @File Name
+    filename.c
+
+  @Summary
+    Brief description of the file.
+
+  @Description
+    Describe the purpose of this file.
+ */
+/* ************************************************************************** */
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+/* Section: Included Files                                                    */
+/* ************************************************************************** */
+/* ************************************************************************** */
+#include "sst26.h"
+#include <string.h>
+#include "configuration.h"
+#include "definitions.h"
+/* This section lists the other files that are included in this file.
+ */
+
+/* TODO:  Include other files here if needed. */
+
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+/* Section: File Scope or Global Data                                         */
+/* ************************************************************************** */
+/* ************************************************************************** */
+
+/*  A brief description of a section can be given directly below the section
+    banner.
+ */
+
+/* ************************************************************************** */
+/** Descriptive Data Item Name
+
+  @Summary
+    Brief one-line summary of the data item.
+    
+  @Description
+    Full description, explaining the purpose and usage of data item.
+    <p>
+    Additional description in consecutive paragraphs separated by HTML 
+    paragraph breaks, as necessary.
+    <p>
+    Type "JavaDoc" in the "How Do I?" IDE toolbar for more information on tags.
+    
+  @Remarks
+    Any additional remarks
+ */
+
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+// Section: Local Functions                                                   */
+/* ************************************************************************** */
+/* ************************************************************************** */
+
+/*  A brief description of a section can be given directly below the section
+    banner.
+ */
+
+/* ************************************************************************** */
+
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+// Section: Interface Functions                                               */
+/* ************************************************************************** */
+/* ************************************************************************** */
+
+/*  A brief description of a section can be given directly below the section
+    banner.
+ */
+
+// *****************************************************************************
+
+
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Global Data Definitions
+// *****************************************************************************
+// *****************************************************************************
+
+// *****************************************************************************
+/* Application Data
+
+  Summary:
+    Holds application data
+
+  Description:
+    This structure holds the application's data.
+
+  Remarks:
+    This structure should be initialized by the APP_Initialize function.
+
+    Application strings and buffers are be defined outside this structure.
+*/
+
+SST26_DATA CACHE_ALIGN sst26Data;
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Application Callback Functions
+// *****************************************************************************
+// *****************************************************************************
+
+/* TODO:  Add any necessary callback functions.
+*/
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Application Local Functions
+// *****************************************************************************
+// *****************************************************************************
+
+
+/* TODO:  Add any necessary local functions.
+*/
+
+void TestErase(void)
+{
+    bool erased = false;
+    uint32_t address = 0x0000;
+
+    SST26_Erase( address, 1);
+    
+    SYS_CONSOLE_PRINT("\r\nErasing");
+    for(int i = 0; i < 60; i++)
+    {
+        SYS_CONSOLE_PRINT(".");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        if(SST26_Ready())
+        {
+            erased = true;
+            break;
+        }
+    }
+    
+    if(erased)
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST ERASE_TO_FLASH OK \r\n");
+    }
+    else
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST ERASE_TO_FLASH FAIL \r\n");
+    }
+}
+
+void TestWrite(void)
+{
+    char buffer[] = "Horizon test write";
+    uint32_t size = sizeof(buffer);
+    uint32_t address = 0x0000;
+
+    if(SST26_Write((uint8_t*)buffer, size, address))
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST WRITE_TO_FLASH OK \r\n");
+    }
+    else
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST WRITE_TO_FLASH FAIL \r\n");
+    }
+}                        
+
+void TestRead(void)
+{
+    char buffer[64];
+    uint32_t size = sizeof(buffer);
+    uint32_t address = 0x0000;
+
+    if(SST26_Read((uint8_t*)buffer, size, address))
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST READ_FROM_FLASH OK \r\n");
+        SYS_CONSOLE_PRINT("\r\n%s\r\n", buffer);
+    }
+    else
+    {
+        SYS_CONSOLE_PRINT("\r\nTEST READ_FROM_FLASH FAIL \r\n");
+    }
+}
+
+
+static int SST26_CMDProcess(SYS_CMD_DEVICE_NODE* pCmdNode, int argc, char** argv) 
+{
+    if ((argc >= 2) && (!strcmp(argv[1], "-te")))
+    {
+        TestErase();
+    }
+    else if ((argc >= 2) && (!strcmp(argv[1], "-tw")))
+    {
+        TestWrite();
+    }
+    else if ((argc >= 2) && (!strcmp(argv[1], "-tr")))
+    {
+        TestRead();
+    }
+    else if((argc >= 2) && !strcmp(argv[1], "help"))
+    {
+        SYS_CONSOLE_PRINT("\r\n-te: Erase, -tw: Write, -tr: Read\r\n");
+    }
+    return 0;
+}
+static const SYS_CMD_DESCRIPTOR SST26CmdTbl[] =
+{
+    {"flash", (SYS_CMD_FNC) SST26_CMDProcess, ": flash-SST26 commands processing"},    
+};
+// *****************************************************************************
+// *****************************************************************************
+// Section: Application Initialization and State Machine Functions
+// *****************************************************************************
+// *****************************************************************************
+
+/*******************************************************************************
+  Function:
+    void SST26_Initialize ( void )
+
+  Remarks:
+    See prototype in app.h.
+ */
+
+void SST26_Initialize ( void )
+{
+    uint32_t i = 0;
+
+    sst26Data.state = SST26_STATE_INIT;
+    sst26Data.address = 0;
+    sst26Data.eraseIndex = 0;
+    sst26Data.writeIndex = 0;
+    sst26Data.dataSize = SECTOR_SIZE;
+
+    for (i = 0; i < sizeof(sst26Data.writeBuffer); i++)
+    {
+        sst26Data.writeBuffer[i] = i;
+    }
+    
+    SYS_CMD_ADDGRP(SST26CmdTbl, sizeof (SST26CmdTbl) / sizeof (*SST26CmdTbl), "flash", ": flash-SST26 commands"); 
+}
+
+
+/******************************************************************************
+  Function:
+    void SST26_Tasks ( void )
+
+  Remarks:
+    See prototype in sst26.h.
+ */
+void SST26_Tasks ( void )
+{
+    DRV_SST26_TRANSFER_STATUS transferStatus = DRV_SST26_TRANSFER_ERROR_UNKNOWN;
+
+    switch ( sst26Data.state )
+    {
+        case SST26_STATE_INIT:
+        {
+            if (DRV_SST26_Status(DRV_SST26_INDEX) == SYS_STATUS_READY)
+            {
+                sst26Data.state = SST26_STATE_OPEN_DRIVER;
+            }
+            break;
+        }
+
+        case SST26_STATE_OPEN_DRIVER:
+        {
+            sst26Data.handle = DRV_SST26_Open(DRV_SST26_INDEX, DRV_IO_INTENT_READWRITE);
+
+            if (sst26Data.handle != DRV_HANDLE_INVALID)
+            {
+                sst26Data.state = SST26_STATE_GEOMETRY_GET;
+            }
+
+            break;
+        }
+        case SST26_STATE_GEOMETRY_GET:
+        {
+            if (DRV_SST26_GeometryGet(sst26Data.handle, &sst26Data.geometry) != true)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+                break;
+            }
+
+            sst26Data.address = 0;
+            sst26Data.eraseIndex = 0;
+            sst26Data.writeIndex = 0;
+            sst26Data.dataSize = SECTOR_SIZE;
+            
+            sst26Data.state = SST26_STATE_READY;
+            SYS_CONSOLE_PRINT("\r\nFlash is ready! \r\n");
+            
+            break;
+        }
+            
+        case SST26_STATE_READY://wait for command
+            break;
+            
+            
+        case SST26_STATE_ERASE_FLASH:
+        {
+            if (DRV_SST26_SectorErase(sst26Data.handle, (sst26Data.address + sst26Data.eraseIndex)) != true)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+            }
+
+            sst26Data.state = SST26_STATE_ERASE_WAIT;
+
+            break;
+        }
+
+        case SST26_STATE_ERASE_WAIT:
+        {
+            transferStatus = DRV_SST26_TransferStatusGet(sst26Data.handle);
+
+            if(transferStatus == DRV_SST26_TRANSFER_COMPLETED)
+            {
+                sst26Data.eraseIndex += sst26Data.geometry.erase_blockSize;
+
+                if (sst26Data.eraseIndex < SECTOR_SIZE)
+                {
+                    sst26Data.state = SST26_STATE_ERASE_FLASH;
+                }
+                else
+                {
+                    sst26Data.state = SST26_STATE_READY;
+                }
+            }
+            else if (transferStatus == DRV_SST26_TRANSFER_ERROR_UNKNOWN)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+            }
+            break;
+        }
+
+        case SST26_STATE_WRITE_MEMORY:
+        {
+            if (DRV_SST26_PageWrite(sst26Data.handle, (uint32_t *)&sst26Data.writeBuffer[sst26Data.writeIndex], (sst26Data.address + sst26Data.writeIndex)) != true)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+                break;
+            }
+
+            sst26Data.state = SST26_STATE_WRITE_WAIT;
+
+            break;
+        }
+
+        case SST26_STATE_WRITE_WAIT:
+        {
+            transferStatus = DRV_SST26_TransferStatusGet(sst26Data.handle);
+
+            if(transferStatus == DRV_SST26_TRANSFER_COMPLETED)
+            {
+                sst26Data.writeIndex += sst26Data.geometry.write_blockSize;
+
+                if (sst26Data.writeIndex < sst26Data.dataSize)
+                {
+                    sst26Data.state = SST26_STATE_WRITE_MEMORY;
+                }
+                else
+                {
+                    sst26Data.state = SST26_STATE_READY;
+                }
+            }
+            else if (transferStatus == DRV_SST26_TRANSFER_ERROR_UNKNOWN)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+            }
+
+            break;
+        }
+
+        case SST26_STATE_READ_MEMORY:
+        {
+            if (DRV_SST26_Read(sst26Data.handle, (uint32_t *)&sst26Data.readBuffer, sst26Data.dataSize, sst26Data.address) != true)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+            }
+            else
+            {
+                sst26Data.state = SST26_STATE_READ_WAIT;
+            }
+
+            break;
+        }
+
+        case SST26_STATE_READ_WAIT:
+        {
+            transferStatus = DRV_SST26_TransferStatusGet(sst26Data.handle);
+
+            if(transferStatus == DRV_SST26_TRANSFER_COMPLETED)
+            {
+                sst26Data.state = SST26_STATE_READY;
+            }
+            else if (transferStatus == DRV_SST26_TRANSFER_ERROR_UNKNOWN)
+            {
+                sst26Data.state = SST26_STATE_ERROR;
+            }
+
+            break;
+        }
+
+        case SST26_STATE_CLOSE:
+        {
+            DRV_SST26_Close(sst26Data.handle);
+
+            break;
+        }
+
+        case SST26_STATE_ERROR:
+        default:
+        {
+            DRV_SST26_Close(sst26Data.handle);
+            break;
+        }
+    }
+}
+
+bool SST26_Ready()
+{
+    return sst26Data.state == SST26_STATE_READY;
+}
+
+bool SST26_Erase(uint32_t address)
+{
+    if(SST26_Ready() && address % BUFFER_SIZE == 0)
+    {
+        sst26Data.eraseIndex = 0;
+        sst26Data.address = address;
+        sst26Data.state = SST26_STATE_ERASE_FLASH;
+        return true;
+    }
+    return false;
+}
+
+bool SST26_Write(uint8_t* buffer, uint32_t size, uint32_t address)
+{
+    if(SST26_Ready() && size <= sizeof(sst26Data.writeBuffer))
+    {
+        for(uint32_t i = 0; i<size; i++)
+        {
+            sst26Data.writeBuffer[i] = buffer[i];
+        }
+    
+        sst26Data.writeIndex = 0;
+        sst26Data.dataSize = size;
+        sst26Data.address = address;
+        sst26Data.state = SST26_STATE_WRITE_MEMORY;
+        return true;
+    }
+    return false;
+}
+
+bool SST26_Read(uint8_t* buffer, uint32_t size, uint32_t address)
+{
+    if(SST26_Ready() && size <= sizeof(sst26Data.readBuffer))
+    {
+        sst26Data.dataSize = size;
+        sst26Data.address = address;
+        sst26Data.state = SST26_STATE_READ_MEMORY;
+
+        while(!SST26_Ready())
+        {
+            vTaskDelay(1 / portTICK_PERIOD_MS);
+        }
+        
+        for(uint32_t i = 0; i<size; i ++)
+        {
+            buffer[i] = sst26Data.readBuffer[i];
+        }
+
+        return true;
+    }
+    return false;
+}
